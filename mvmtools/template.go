@@ -8,7 +8,7 @@ const controllerTempl = `package controllers
 
 import (
   "{{.Module}}/models"
-  "github.com/sailucheng/bubble_test/mvm"
+  "github.com/sailucheng/bubble-mvm/mvm"
 )
 
 type {{.Name}}Controller struct {
@@ -74,7 +74,7 @@ import (
   "{{.Module}}/controllers"
   "{{.Module}}/models"
   "{{.Module}}/views"
-  "github.com/sailucheng/bubble_test/mvm"
+  "github.com/sailucheng/bubble_mvm/mvm"
 )
 
 func main() {
