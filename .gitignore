@@ -1,0 +1,68 @@
+# 编译输出文件
+/bin/
+/obj/
+/out/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 环境配置文件
+.env
+*.local
+
+# 日志文件
+*.log
+logs/
+*.trace
+
+# 临时文件
+*.tmp
+*.swp
+*.bak
+*.old
+*.~*
+
+# IDE/编辑器配置文件
+.vscode/
+.idea/
+*.suo
+*.user
+*.rsuser
+*.xcworkspace
+
+# Node.js 项目相关
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python 项目相关
+__pycache__/
+*.py[cod]
+*.pyo
+*.pytest_cache/
+*.pylint.d/
+
+# Java 项目相关
+*.class
+*.war
+*.ear
+target/
+*.iml
+
+# Go 项目相关
+*.exe
+*.out
+*.test
+/go/bin/
+/go/pkg/
+
+# 特定框架文件
+coverage/
+dist/
+build/
+
+# 自定义忽略文件
+secret_config.json
+private_data/
