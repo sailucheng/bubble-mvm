@@ -34,6 +34,7 @@ func (nopeController) Handle(ctx *Context) Result {
 			}
 		}
 	}
+
 	return ctx.None()
 }
 

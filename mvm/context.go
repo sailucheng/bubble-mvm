@@ -88,7 +88,7 @@ func (ctx *Context) WithError(err error) Result {
 func (ctx *Context) Redirect(model any, v Viewer) Result {
 	result := Result{
 		Viewer: v,
-		Model:  v,
+		Model:  model,
 		Cmd:    nil,
 	}
 	if ctx.Result != nil {
@@ -96,13 +96,6 @@ func (ctx *Context) Redirect(model any, v Viewer) Result {
 		result.Cmd = ctx.Result.Cmd
 	}
 	return result
-}
-
-// fillTeaModel assigns the current Model and Viewer to the TeaModel internal.
-// This method ensures that the TeaModel is populated with the current state.
-func (ctx *Context) fillTeaModel() {
-	// Only fill TeaModel if Result exists
-	applyStates(ctx)
 }
 
 // Quit creates a Result that signals the termination of the program by returning a Quit command.
@@ -114,7 +107,6 @@ func (ctx *Context) Quit() Result {
 	if ctx.Result != nil {
 		v = ctx.Result.Viewer
 	}
-
 	return Result{
 		Viewer: v,
 		Cmd:    tea.Quit,
@@ -157,5 +149,12 @@ func applyStates(ctx *Context) {
 	}
 
 	ctx.TeaModel.Model = ctx.Model
-	ctx.TeaModel.viwerer = ctx.Viewer
+	ctx.TeaModel.viewer = ctx.Viewer
+}
+
+// fillTeaModel assigns the current Model and Viewer to the TeaModel internal.
+// This method ensures that the TeaModel is populated with the current state.
+func (ctx *Context) fillTeaModel() {
+	// Only fill TeaModel if Result exists
+	applyStates(ctx)
 }

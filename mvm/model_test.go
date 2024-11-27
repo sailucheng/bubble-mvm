@@ -10,10 +10,10 @@ import (
 func TestModeInit(t *testing.T) {
 	m := CreateModel(nil)
 	assert.Nil(t, m.Init())
-	assert.IsType(t, nopViewer{}, m.viwerer)
+	assert.IsType(t, nopViewer{}, m.viewer)
 	m = m.WithInitView(&testViewer{})
 	var tw testViewer
-	assert.IsType(t, &tw, m.viwerer)
+	assert.IsType(t, &tw, m.viewer)
 	assert.Equal(t, tw.Init()(), m.Init()())
 }
 
@@ -47,7 +47,7 @@ func TestResultWithoutViewWillUseInitialView(t *testing.T) {
 	model := CreateModel(nil).WithInitView(v).WithPipe(pip)
 	model.Update(nil)
 
-	assert.Same(t, v, model.viwerer)
+	assert.Same(t, v, model.viewer)
 }
 
 type modelTestController struct {
@@ -74,6 +74,9 @@ func (controller modelTestController) Handle(c *Context) Result {
 type testViewer struct {
 	t        *testing.T
 	expected string
+}
+
+func (tw *testViewer) Update(ctx *Context) {
 }
 
 func (tw *testViewer) Render(model any) string {

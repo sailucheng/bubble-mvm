@@ -44,8 +44,10 @@ func main() {
 
 func buildGenerateCmd() *cobra.Command {
 	genCmd := &cobra.Command{
-		Use:   "gen",
-		Long:  "Generate mvm components",
+		Use: "gen",
+		Long: `Generate mvm components.  
+You can generate multiple components at once, e.g., 'gen controller,model'. 
+If no components are specified, all components (controller, view, model) will be generated.`,
 		Short: "Generate mvm components",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(name) == 0 {
@@ -58,13 +60,39 @@ func buildGenerateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return projectGenerate(ctx)
+			if len(args) == 0 {
+				return projectGenerate(ctx)
+			}
+
+			components := strings.Split(strings.TrimSpace(strings.ToLower(args[0])), ",")
+			for _, component := range components {
+				subCmd, _, err := cmd.Root().Find([]string{"gen", component})
+				if err != nil {
+					return fmt.Errorf("unknown component %s", component)
+				}
+
+				if err := subCmd.RunE(subCmd, []string{}); err != nil {
+					return err
+				}
+			}
+			return nil
 		},
 	}
 	genCmd.PersistentFlags().StringVarP(&name, "name", "n", "", "Component name")
 	genCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	genCmd.PersistentFlags().StringVarP(&outPath, "out", "o", "", "Component out path")
-
+	mainCmd := &cobra.Command{
+		Use:   "main",
+		Long:  "Generate main.go file",
+		Short: "Generate main.go file",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, err := buildContext()
+			if err != nil {
+				return err
+			}
+			return generate(ctx, createTask("main.go", ModeMain))
+		},
+	}
 	controllerCmd := &cobra.Command{
 		Use:   "controller",
 		Long:  "Generate controller components",
@@ -77,28 +105,24 @@ func buildGenerateCmd() *cobra.Command {
 			return controllerGenerate(ctx)
 		},
 	}
-
 	viewCmd := &cobra.Command{
 		Use:   "view",
 		Long:  "Generate view components",
 		Short: "Generate view components",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, err := buildContext()
-
 			if err != nil {
 				return err
 			}
 			return viewGenerate(ctx)
 		},
 	}
-
 	modelCmd := &cobra.Command{
 		Use:   "model",
 		Long:  "Generate model components",
 		Short: "Generate model components",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, err := buildContext()
-
 			if err != nil {
 				return err
 			}
@@ -106,7 +130,7 @@ func buildGenerateCmd() *cobra.Command {
 		},
 	}
 
-	genCmd.AddCommand(controllerCmd, viewCmd, modelCmd)
+	genCmd.AddCommand(mainCmd, controllerCmd, viewCmd, modelCmd)
 	return genCmd
 }
 
@@ -173,19 +197,21 @@ func viewGenerate(ctx *context) error {
 	name := strings.ToLower(string(ctx.Name[0])) + ctx.Name[1:]
 	return generate(ctx, createTask(name+"View.go", ModeView))
 }
+
 func modelGenerate(ctx *context) error {
-	//file first chat is lowercase
+	// file first chat is lowercase
 	name := strings.ToLower(string(ctx.Name[0])) + ctx.Name[1:]
 	return generate(ctx, createTask(name+"Model.go", ModeModel))
 }
 
 func controllerGenerate(ctx *context) error {
-	//file first chat is lowercase
+	// file first chat is lowercase
 	name := strings.ToLower(string(ctx.Name[0])) + ctx.Name[1:]
 	return generate(ctx, createTask(name+"Controller.go", ModeController))
 }
+
 func projectGenerate(ctx *context) error {
-	//file first chat is lowercase
+	// file first chat is lowercase
 	name := strings.ToLower(string(ctx.Name[0])) + ctx.Name[1:]
 	return generate(ctx,
 		createTask("main.go", ModeMain),

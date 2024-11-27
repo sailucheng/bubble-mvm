@@ -5,30 +5,32 @@ import (
 )
 
 type Model struct {
-	pipe    *Pipe
-	Model   any
-	viwerer Viewer
+	pipe   *Pipe
+	Model  any
+	viewer Viewer
 }
 
 func CreateModel(model any) Model {
 	m := Model{
-		pipe:    DefaultPipe,
-		Model:   model,
-		viwerer: nopViewer{},
+		pipe:   DefaultPipe,
+		Model:  model,
+		viewer: NopeViewer,
 	}
 	return m
 }
+
 func (m Model) WithPipe(pip *Pipe) Model {
 	m.pipe = pip
 	return m
 }
+
 func (m Model) WithInitView(vi Viewer) Model {
-	m.viwerer = vi
+	m.viewer = vi
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	return m.viwerer.Init()
+	return m.viewer.Init()
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -47,7 +49,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.viwerer.Render(m.Model)
+	return m.viewer.Render(m.Model)
 }
 
 func (m Model) buildContext(msg tea.Msg) *Context {
@@ -55,6 +57,6 @@ func (m Model) buildContext(msg tea.Msg) *Context {
 	c.TeaModel = m
 	c.Model = m.Model
 	c.Msg = msg
-	c.Viewer = m.viwerer
+	c.Viewer = m.viewer
 	return c
 }

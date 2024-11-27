@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/sailucheng/bubble-mvm/examples/huh-demo/models"
+	"github.com/sailucheng/bubble-mvm/mvm"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 
 type HuhDemoView struct {
 	Model    *models.HuhDemoModel
-	Quitting bool
+	quitting bool
 	Form     *huh.Form
 }
 
@@ -29,7 +30,7 @@ func InitViewModel(model *models.HuhDemoModel) *HuhDemoView {
 		),
 		huh.NewGroup(
 			huh.NewConfirm().Title("Are you sure?").Affirmative("ok").Negative("cancel").Validate(func(b bool) error {
-				if b == false {
+				if !b {
 					return fmt.Errorf("please select ok button")
 				}
 				return nil
@@ -42,12 +43,34 @@ func InitViewModel(model *models.HuhDemoModel) *HuhDemoView {
 	}
 }
 
+func (v *HuhDemoView) Update(ctx *mvm.Context) mvm.Result {
+
+	switch ctx.Msg.(type) {
+	case tea.KeyMsg:
+		switch ctx.Msg.(tea.KeyMsg).String() {
+		case "ctrl+c":
+			v.quitting = true
+			return ctx.Quit()
+		}
+	}
+
+	formModel, cmd := v.Form.Update(ctx.Msg)
+	if formModel, ok := formModel.(*huh.Form); ok {
+		v.Form = formModel
+		if formModel.State == huh.StateCompleted {
+			v.quitting = true
+			return ctx.Quit()
+		}
+	}
+	return ctx.Cmd(cmd)
+}
+
 func (v *HuhDemoView) Init() tea.Cmd {
 	return v.Form.Init()
 }
 
 func (v *HuhDemoView) Render(model any) string {
-	if v.Quitting {
+	if v.quitting {
 		return v.Model.String() + "\n"
 	}
 

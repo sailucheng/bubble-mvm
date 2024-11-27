@@ -121,7 +121,9 @@ func calculateModule(module string, name string, root string, dest string) (stri
 		return "", fmt.Errorf("you must specify outPath in golang project")
 	}
 
-	return module + "/" + strings.Trim(dest[index+len(root):], sep), nil
+	tails := strings.Trim(dest[index+len(root):], sep)
+	tails = strings.ReplaceAll(tails, sep, "/")
+	return module + "/" + tails, nil
 }
 
 func checkPath(path string) (string, error) {

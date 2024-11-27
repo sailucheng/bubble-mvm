@@ -4,9 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var (
-	NopViewer = nopViewer{}
-)
+var NopeViewer = nopViewer{}
 
 type Viewer interface {
 	Init() tea.Cmd
