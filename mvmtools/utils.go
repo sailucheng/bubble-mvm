@@ -103,7 +103,7 @@ func readGoModModule(f string) (string, error) {
 }
 
 func calculateModule(module string, name string, root string, dest string) (string, error) {
-	if len(dest) == 0 {
+	if len(dest) == 0 || root == dest {
 		return module + "/" + name, nil
 	}
 	root = filepath.Clean(root)
