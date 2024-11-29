@@ -1,7 +1,9 @@
 package mvm
 
 import (
+	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
+	"reflect"
 )
 
 var nopeResult = Result{}
@@ -20,24 +22,28 @@ type Result struct {
 
 type nopeController struct{}
 
-func (nopeController) Filter() bool {
+func (nopeController) Filter(*Context) bool {
 	return true
 }
 
 func (nopeController) Handle(ctx *Context) Result {
-	switch msg := ctx.Msg.(type) {
-	case tea.KeyMsg:
-		{
-			switch msg.String() {
-			case "ctrl+c":
-				return ctx.Quit()
-			}
-		}
-	}
-
 	return ctx.None()
 }
 
 type ControllerBase struct {
 	nopeController
+}
+
+func getControllerKey(c Controller) (string, error) {
+	v := reflect.ValueOf(c)
+	if !v.IsValid() {
+		return "", fmt.Errorf("invalid controller: nil or uninitialized")
+	}
+	t := v.Type()
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	pkgName := t.PkgPath()
+	typeName := t.Name()
+	return fmt.Sprintf("%s.%s", pkgName, typeName), nil
 }

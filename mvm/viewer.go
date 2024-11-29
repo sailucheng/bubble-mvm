@@ -8,6 +8,7 @@ var NopeViewer = nopViewer{}
 
 type Viewer interface {
 	Init() tea.Cmd
+	Update(ctx *Context) Result
 	Render(model any) string
 }
 
@@ -19,4 +20,8 @@ func (nop nopViewer) Init() tea.Cmd {
 
 func (nop nopViewer) Render(model any) string {
 	return ""
+}
+
+func (nop nopViewer) Update(ctx *Context) Result {
+	return Result{}
 }

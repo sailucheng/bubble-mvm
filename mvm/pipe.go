@@ -1,5 +1,7 @@
 package mvm
 
+import "log"
+
 var DefaultPipe *Pipe
 
 func init() {
@@ -46,6 +48,7 @@ func CreatePipe(opts ...opt) *Pipe {
 	for _, o := range opts {
 		o(&p)
 	}
+	p.mws = append(p.mws, viewerUpdaterMiddleware{})
 	p.mws = append(p.mws, controllerMiddleware(func() []Controller {
 		return p.controllers
 	}))
@@ -71,17 +74,47 @@ func (pip Pipe) Execute(ctx *Context) {
 	next(ctx)
 }
 
+type viewerUpdaterMiddleware struct{}
+
+func (v viewerUpdaterMiddleware) Execute(ctx *Context, next MiddlewareFunc) {
+	var current = ctx.Viewer
+	if current == nil {
+		next(ctx)
+		return
+	}
+
+	result := current.Update(ctx)
+	ctx.Result = &result
+	ctx.fillTeaModel()
+
+	next(ctx)
+}
+
 // end of pipe,drop next
 type controllerMiddleware func() []Controller
 
 func (c controllerMiddleware) Execute(ctx *Context, _ MiddlewareFunc) {
 	for _, controller := range c() {
 		if controller.Filter(ctx) {
+			callControllerMethod(ctx, controller)
+			if ctx.IsAbort() {
+				return
+			}
+
 			result := controller.Handle(ctx)
 			ctx.Result = &result
 			ctx.fillTeaModel()
 			if ctx.IsAbort() {
-				break
+				return
+			}
+		}
+	}
+}
+func callControllerMethod(ctx *Context, controller Controller) {
+	if len(ctx.events) > 0 {
+		for _, e := range ctx.events {
+			if err := triggerControllerMethod(controller, e.name, e.args...); err != nil {
+				log.Printf("trigger controller method %s failed: %v", e.name, err)
 			}
 		}
 	}

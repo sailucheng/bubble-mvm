@@ -29,5 +29,5 @@ func main() {
 }
 
 func register() {
-	mvm.RegisterControllers(controllers.HuhDemoController{})
+	mvm.RegisterControllers(&controllers.HuhDemoController{})
 }

@@ -76,7 +76,8 @@ type testViewer struct {
 	expected string
 }
 
-func (tw *testViewer) Update(ctx *Context) {
+func (tw *testViewer) Update(ctx *Context) Result {
+	return ctx.NoAction()
 }
 
 func (tw *testViewer) Render(model any) string {

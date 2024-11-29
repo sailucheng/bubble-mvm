@@ -1,16 +1,27 @@
 package mvm
 
 import (
+	"fmt"
+	"log"
+	"reflect"
 	"sync"
 	"sync/atomic"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var ContextPool = sync.Pool{
-	New: func() any {
-		return &Context{}
-	},
+var (
+	ContextPool = sync.Pool{
+		New: func() any {
+			return &Context{}
+		},
+	}
+	ControllerMethodCache = sync.Map{}
+)
+
+type event struct {
+	name string
+	args []any
 }
 
 // Context holds the current state of the application during pipeline processa
@@ -22,26 +33,22 @@ type Context struct {
 	// Msg represents the current message being processed in the application.
 	// It is of type tea.Msg and drives the application's logic flow.
 	Msg tea.Msg
-
 	// TeaModel is used internally for handling tea bubble processing.
 	// It serves the same purpose as the model in tea bubble, but with the additional MVM pipeline logic.
 	// In most cases, you don't need to worry about this field.
 	TeaModel Model
-
 	// Model represents the business logic model.
 	// The view should be rendered based on the state of this field.
 	Model any
-
 	// Viewer is responsible for the rendering logic of the interface.
 	// It is used to display the view corresponding to the Model.
 	Viewer Viewer
-
 	// aborted is used to indicate if the process was aborted.
 	aborted atomic.Bool
-
 	// Result stores the result returned by the previous pipeline or controller logic.
 	// It holds the result of the application’s current state after processing.
 	Result *Result
+	events []event
 }
 
 // Cmd creates and returns a Result with the provided command `cmd`.
@@ -128,6 +135,53 @@ func (ctx *Context) IsAbort() bool {
 	return ctx.aborted.Load()
 }
 
+func (ctx *Context) Trigger(method string, args ...any) {
+	ctx.addCallback(method, args...)
+}
+
+func (ctx *Context) addCallback(method string, args ...any) {
+	ctx.events = append(ctx.events, event{method, args})
+}
+
+func triggerControllerMethod(controller Controller, method string, args ...any) error {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Method invocation panic: %v", r)
+		}
+	}()
+
+	key, err := getControllerKey(controller)
+
+	if err != nil {
+		return err
+	}
+
+	v, _ := ControllerMethodCache.LoadOrStore(key, &sync.Map{})
+	methods := v.(*sync.Map)
+
+	methodValue, ok := methods.LoadOrStore(method, func() reflect.Value {
+		m := reflect.ValueOf(controller).MethodByName(method)
+		if !m.IsValid() {
+			return reflect.Value{}
+		}
+		return m
+	}())
+
+	invoker, ok := methodValue.(reflect.Value)
+	if !ok || !invoker.IsValid() {
+		return fmt.Errorf("method %s not found in controller", method)
+	}
+
+	values := MakeReflectValues(args...)
+
+	if invoker.Type().IsVariadic() {
+		invoker.CallSlice(values)
+	} else {
+		invoker.Call(values)
+	}
+	return nil
+}
+
 func (ctx *Context) reset() {
 	ctx.aborted.Store(false)
 	ctx.TeaModel = Model{}
@@ -135,6 +189,11 @@ func (ctx *Context) reset() {
 	ctx.Result = nil
 	ctx.Model = nil
 	ctx.Viewer = nil
+	if ctx.events != nil && cap(ctx.events) < 256 {
+		clear(ctx.events)
+	} else {
+		ctx.events = nil
+	}
 }
 
 func applyStates(ctx *Context) {

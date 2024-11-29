@@ -44,7 +44,6 @@ func InitViewModel(model *models.HuhDemoModel) *HuhDemoView {
 }
 
 func (v *HuhDemoView) Update(ctx *mvm.Context) mvm.Result {
-
 	switch ctx.Msg.(type) {
 	case tea.KeyMsg:
 		switch ctx.Msg.(tea.KeyMsg).String() {
@@ -53,12 +52,12 @@ func (v *HuhDemoView) Update(ctx *mvm.Context) mvm.Result {
 			return ctx.Quit()
 		}
 	}
-
 	formModel, cmd := v.Form.Update(ctx.Msg)
 	if formModel, ok := formModel.(*huh.Form); ok {
 		v.Form = formModel
 		if formModel.State == huh.StateCompleted {
 			v.quitting = true
+			ctx.Trigger("OnExit")
 			return ctx.Quit()
 		}
 	}

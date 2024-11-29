@@ -41,7 +41,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}()
 
 	m.pipe.Execute(ctx)
-
 	if ctx.Result != nil {
 		return ctx.TeaModel, ctx.Result.Cmd
 	}
@@ -58,5 +57,8 @@ func (m Model) buildContext(msg tea.Msg) *Context {
 	c.Model = m.Model
 	c.Msg = msg
 	c.Viewer = m.viewer
+	if c.events == nil {
+		c.events = make([]event, 0, 10)
+	}
 	return c
 }
