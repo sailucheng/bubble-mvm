@@ -70,6 +70,16 @@ func (ctx *Context) NoAction() Result {
 	}
 }
 
+// Propagate returns the current Result from the Context if it exists.
+// If the Context's Result is nil, it returns a default Result created
+// using the NoAction method.
+func (ctx *Context) Propagate() Result {
+	if ctx.Result != nil {
+		return *ctx.Result
+	}
+	return ctx.NoAction()
+}
+
 // View creates a Result with a new Viewer `v`, leaving the Model and Command unchanged.
 // This can be used to render a new view while keeping the same model and command.
 func (ctx *Context) View(v Viewer) Result {

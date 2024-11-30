@@ -14,7 +14,7 @@ func (controller *HuhDemoController) Filter(ctx *mvm.Context) bool {
 }
 
 func (controller *HuhDemoController) Handle(ctx *mvm.Context) mvm.Result {
-	return ctx.Cmd(ctx.Result.Cmd)
+	return ctx.Propagate()
 }
 
 func (controller *HuhDemoController) OnExit() {
