@@ -20,6 +20,18 @@ type Result struct {
 	Viewer Viewer
 }
 
+func (r *Result) Composite(other Result) {
+	if other.Err != nil {
+		if r.Err == nil {
+			r.Err = other.Err
+		}
+		r.Err = fmt.Errorf("composite errors: %w and %w", r.Err, other.Err)
+	}
+	r.Model = other.Model
+	r.Cmd = other.Cmd
+	r.Viewer = other.Viewer
+}
+
 type nopeController struct{}
 
 func (nopeController) Filter(*Context) bool {

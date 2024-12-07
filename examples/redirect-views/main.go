@@ -6,9 +6,9 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/sailucheng/bubble-mvm/examples/multi-views/controllers"
-	"github.com/sailucheng/bubble-mvm/examples/multi-views/models"
-	"github.com/sailucheng/bubble-mvm/examples/multi-views/views"
+	"github.com/sailucheng/bubble-mvm/examples/redirect-views/controllers"
+	"github.com/sailucheng/bubble-mvm/examples/redirect-views/models"
+	"github.com/sailucheng/bubble-mvm/examples/redirect-views/views"
 	"github.com/sailucheng/bubble-mvm/mvm"
 )
 

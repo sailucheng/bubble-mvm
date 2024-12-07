@@ -77,7 +77,7 @@ func (pip Pipe) Execute(ctx *Context) {
 type viewerUpdaterMiddleware struct{}
 
 func (v viewerUpdaterMiddleware) Execute(ctx *Context, next MiddlewareFunc) {
-	var current = ctx.Viewer
+	current := ctx.Viewer
 	if current == nil {
 		next(ctx)
 		return
@@ -96,26 +96,41 @@ type controllerMiddleware func() []Controller
 func (c controllerMiddleware) Execute(ctx *Context, _ MiddlewareFunc) {
 	for _, controller := range c() {
 		if controller.Filter(ctx) {
-			callControllerMethod(ctx, controller)
+			result := callControllerMethod(ctx, controller)
+			populateContext(ctx, result)
+
 			if ctx.IsAbort() {
 				return
 			}
 
-			result := controller.Handle(ctx)
-			ctx.Result = &result
-			ctx.fillTeaModel()
+			result = controller.Handle(ctx)
+			populateContext(ctx, result)
+
 			if ctx.IsAbort() {
 				return
 			}
 		}
 	}
 }
-func callControllerMethod(ctx *Context, controller Controller) {
+func populateContext(ctx *Context, result Result) {
+	if result.Viewer == nil && result.Model == nil {
+		//all result has this field
+		return
+	}
+	ctx.Result = &result
+	ctx.fillTeaModel()
+}
+func callControllerMethod(ctx *Context, controller Controller) Result {
+	var ret Result
 	if len(ctx.events) > 0 {
 		for _, e := range ctx.events {
-			if err := triggerControllerMethod(controller, e.name, e.args...); err != nil {
+			result, err := triggerControllerMethod(controller, e.name, e.args...)
+			if err != nil {
 				log.Printf("trigger controller method %s failed: %v", e.name, err)
+				continue
 			}
+			ret.Composite(*result)
 		}
 	}
+	return nopeResult
 }

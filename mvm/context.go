@@ -16,7 +16,7 @@ var (
 			return &Context{}
 		},
 	}
-	ControllerMethodCache = sync.Map{}
+	ControllerMethodCache = CreateMethodInvokerCache()
 )
 
 type event struct {
@@ -153,43 +153,34 @@ func (ctx *Context) addCallback(method string, args ...any) {
 	ctx.events = append(ctx.events, event{method, args})
 }
 
-func triggerControllerMethod(controller Controller, method string, args ...any) error {
+func triggerControllerMethod(controller Controller, method string, args ...any) (*Result, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Method invocation panic: %v", r)
 		}
 	}()
 
-	key, err := getControllerKey(controller)
-
+	invoker, _, err := ControllerMethodCache.GetOrAdd(controller, method)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	v, _ := ControllerMethodCache.LoadOrStore(key, &sync.Map{})
-	methods := v.(*sync.Map)
-
-	methodValue, ok := methods.LoadOrStore(method, func() reflect.Value {
-		m := reflect.ValueOf(controller).MethodByName(method)
-		if !m.IsValid() {
-			return reflect.Value{}
-		}
-		return m
-	}())
-
-	invoker, ok := methodValue.(reflect.Value)
-	if !ok || !invoker.IsValid() {
-		return fmt.Errorf("method %s not found in controller", method)
-	}
-
 	values := MakeReflectValues(args...)
 
+	var rets []reflect.Value
 	if invoker.Type().IsVariadic() {
-		invoker.CallSlice(values)
+		rets = invoker.CallSlice(values)
 	} else {
-		invoker.Call(values)
+		rets = invoker.Call(values)
 	}
-	return nil
+
+	if len(rets) == 0 {
+		return &Result{}, nil
+	}
+
+	if result, ok := rets[0].Interface().(Result); ok {
+		return &result, nil
+	}
+	return nil, fmt.Errorf("the first parameter of the 'trigger' must be of type 'mvm.Result")
 }
 
 func (ctx *Context) reset() {
