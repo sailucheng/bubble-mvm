@@ -127,10 +127,12 @@ func callControllerMethod(ctx *Context, controller Controller) Result {
 			result, err := triggerControllerMethod(controller, e.name, e.args...)
 			if err != nil {
 				log.Printf("trigger controller method %s failed: %v", e.name, err)
+				result.Err = err
 				continue
 			}
 			ret.Composite(*result)
 		}
+		return ret
 	}
 	return nopeResult
 }
