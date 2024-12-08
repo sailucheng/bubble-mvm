@@ -191,7 +191,7 @@ func (ctx *Context) reset() {
 	ctx.Model = nil
 	ctx.Viewer = nil
 	if ctx.events != nil && cap(ctx.events) < 256 {
-		clear(ctx.events)
+		ctx.events = ctx.events[:0]
 	} else {
 		ctx.events = nil
 	}

@@ -98,16 +98,17 @@ func (c controllerMiddleware) Execute(ctx *Context, _ MiddlewareFunc) {
 		if controller.Filter(ctx) {
 			result := callControllerMethod(ctx, controller)
 			populateContext(ctx, result)
+			ctx.events = ctx.events[:0]
 
 			if ctx.IsAbort() {
-				return
+				break
 			}
 
 			result = controller.Handle(ctx)
 			populateContext(ctx, result)
 
 			if ctx.IsAbort() {
-				return
+				break
 			}
 		}
 	}
